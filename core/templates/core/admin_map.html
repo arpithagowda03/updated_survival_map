@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SurvivalMap — Admin Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+:root{--bg:#060a10;--surface:#0c1520;--card:#111c2a;--border:#1a2a3d;--accent:#00d4aa;--accent2:#ff6b35;--danger:#ff3b5c;--warn:#f59e0b;--info:#6366f1;--text:#e8f0fe;--muted:#6b7f96;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+
+/* TOP BAR */
+.adminbar{display:flex;align-items:center;gap:14px;padding:10px 20px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap;}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;color:var(--accent);white-space:nowrap;}
+.logo span{color:var(--accent2);}
+.admin-badge{padding:4px 10px;background:rgba(255,107,53,0.12);border:1px solid rgba(255,107,53,0.3);border-radius:20px;font-size:0.72rem;font-weight:700;color:var(--accent2);text-transform:uppercase;letter-spacing:1px;}
+.stat-pills{display:flex;gap:10px;flex-wrap:wrap;}
+.stat-pill{padding:6px 14px;background:var(--card);border:1px solid var(--border);border-radius:8px;font-size:0.8rem;display:flex;align-items:center;gap:6px;}
+.stat-pill strong{color:var(--accent);}
+.adminbar-actions{margin-left:auto;display:flex;gap:8px;}
+.ab-btn{padding:8px 16px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:0.82rem;cursor:pointer;font-family:inherit;transition:all .2s;white-space:nowrap;}
+.ab-btn:hover{border-color:var(--accent);color:var(--accent);}
+.ab-btn.add{background:var(--accent);color:#000;border-color:var(--accent);font-weight:700;}
+.ab-btn.add:hover{background:#00f5c4;}
+.ab-btn.logout{border-color:var(--danger);color:var(--danger);}
+.ab-btn.logout:hover{background:var(--danger);color:#fff;}
+
+/* LAYOUT */
+.admin-layout{display:flex;flex:1;overflow:hidden;}
+#map{flex:1;z-index:1;}
+
+/* ADMIN PANEL */
+.admin-panel{width:380px;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;}
+.panel-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;}
+.ptab{flex:1;padding:10px 4px;text-align:center;font-size:0.72rem;font-weight:600;cursor:pointer;color:var(--muted);border:none;background:transparent;font-family:inherit;transition:all .2s;border-bottom:2px solid transparent;white-space:nowrap;}
+.ptab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.panel-body{flex:1;overflow-y:auto;padding:14px;}
+.panel-body::-webkit-scrollbar{width:4px;}
+.panel-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+
+/* LOCATION CARDS */
+.loc-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;transition:all .2s;}
+.loc-card:hover{border-color:var(--accent);}
+.loc-card-header{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px;}
+.loc-name{font-weight:600;font-size:0.88rem;line-height:1.3;}
+.cat-badge{padding:2px 8px;border-radius:12px;font-size:0.68rem;font-weight:700;text-transform:uppercase;flex-shrink:0;}
+.cat-food{background:rgba(245,158,11,.15);color:#f59e0b;}
+.cat-shelter{background:rgba(99,102,241,.15);color:#818cf8;}
+.cat-water{background:rgba(6,182,212,.15);color:#22d3ee;}
+.cat-medical{background:rgba(239,68,68,.15);color:#f87171;}
+.cat-clothing{background:rgba(139,92,246,.15);color:#a78bfa;}
+.loc-meta{font-size:0.76rem;color:var(--muted);line-height:1.6;}
+.verified-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);margin-right:4px;}
+.unverified-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--warn);margin-right:4px;}
+.loc-actions{display:flex;gap:6px;margin-top:8px;}
+.la-btn{flex:1;padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:0.74rem;cursor:pointer;font-family:inherit;transition:all .2s;}
+.la-btn:hover{border-color:var(--accent);color:var(--accent);}
+.la-btn.verify{border-color:var(--accent);color:var(--accent);}
+.la-btn.verify:hover{background:var(--accent);color:#000;}
+.la-btn.del{border-color:var(--danger);color:var(--danger);}
+.la-btn.del:hover{background:var(--danger);color:#fff;}
+
+/* VOLUNTEER CARDS */
+.vol-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;}
+.vol-name{font-weight:600;font-size:0.88rem;}
+.vol-meta{font-size:0.76rem;color:var(--muted);margin-top:4px;line-height:1.6;}
+.skill-tag{display:inline-block;padding:3px 10px;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);border-radius:20px;font-size:0.72rem;color:#818cf8;margin-top:4px;}
+.vol-filter-row{display:flex;gap:8px;margin-bottom:12px;}
+.vol-filter-row select{flex:1;padding:7px 10px;background:var(--card);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:0.8rem;font-family:inherit;outline:none;}
+.vol-filter-row select:focus{border-color:var(--accent);}
+.vf-btn{padding:7px 14px;background:var(--accent);color:#000;border:none;border-radius:7px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:inherit;}
+
+/* EMERGENCY CARDS */
+.em-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;}
+.em-card.high{border-color:rgba(255,59,92,.4);}
+.em-card.critical{border-color:var(--danger);background:rgba(255,59,92,.05);}
+.em-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.score-badge{padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:700;}
+.em-msg{font-size:0.82rem;color:var(--muted);line-height:1.5;margin-bottom:6px;}
+.em-needs{font-size:0.76rem;color:var(--accent);}
+.em-time{font-size:0.72rem;color:var(--muted);}
+.em-resolve{margin-top:8px;width:100%;padding:6px;background:transparent;border:1px solid var(--accent);border-radius:6px;color:var(--accent);font-size:0.76rem;cursor:pointer;font-family:inherit;transition:all .2s;}
+.em-resolve:hover{background:var(--accent);color:#000;}
+
+/* CHARTS / STATS */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.stat-box{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;}
+.stat-box .num{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;color:var(--accent);}
+.stat-box .lbl{font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:4px;}
+.bar-chart{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px;}
+.bar-chart h4{font-size:0.82rem;font-weight:600;margin-bottom:12px;color:var(--muted);}
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;font-size:0.78rem;}
+.bar-label{width:70px;color:var(--muted);}
+.bar-bg{flex:1;height:8px;background:var(--border);border-radius:4px;}
+.bar-fill{height:100%;border-radius:4px;}
+.bar-val{width:30px;text-align:right;color:var(--text);font-weight:600;}
+
+/* FILTER SEARCH */
+.admin-search{display:flex;gap:8px;margin-bottom:12px;}
+.admin-search input{flex:1;padding:8px 12px;background:var(--card);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:0.82rem;font-family:inherit;outline:none;}
+.admin-search input:focus{border-color:var(--accent);}
+.admin-search select{padding:8px 10px;background:var(--card);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:0.82rem;font-family:inherit;outline:none;}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:1000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px);}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:500px;width:92%;max-height:90vh;overflow-y:auto;}
+.modal h3{font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;margin-bottom:20px;color:var(--accent);}
+.form-group{margin-bottom:12px;}
+.form-group label{display:block;font-size:0.78rem;color:var(--muted);margin-bottom:5px;font-weight:500;}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:9px 12px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.88rem;font-family:inherit;outline:none;}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--accent);}
+.form-group textarea{resize:vertical;min-height:70px;}
+.form-group select option{background:var(--card);}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.modal-btns{display:flex;gap:10px;margin-top:20px;}
+.modal-save{flex:1;padding:11px;background:var(--accent);color:#000;border:none;border-radius:8px;font-size:0.9rem;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;}
+.modal-save:hover{background:#00f5c4;}
+.modal-cancel{flex:1;padding:11px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:8px;font-size:0.9rem;cursor:pointer;font-family:inherit;transition:all .2s;}
+.modal-cancel:hover{border-color:var(--danger);color:var(--danger);}
+
+/* MAP CLICK INFO */
+.map-click-info{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--accent);border-radius:10px;padding:10px 18px;font-size:0.82rem;z-index:500;display:none;pointer-events:none;}
+
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--accent);color:#000;padding:12px 24px;border-radius:10px;font-weight:700;font-size:0.88rem;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;}
+.toast.show{opacity:1;}
+.empty-state{text-align:center;padding:40px 20px;color:var(--muted);}
+.empty-state div{font-size:2rem;margin-bottom:10px;}
+.section-label{font-size:0.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px;}
+</style>
+</head>
+<body>
+
+<div class="adminbar">
+  <a href="/" style="text-decoration:none"><div class="logo">Survival<span>Map</span> <span class="admin-badge">Admin</span></div></a>
+  <div class="stat-pills">
+    <div class="stat-pill">Total <strong>{{ stats.total }}</strong></div>
+    <div class="stat-pill">Verified <strong>{{ stats.verified }}</strong></div>
+    <div class="stat-pill">Volunteers <strong>{{ stats.volunteers }}</strong></div>
+    <div class="stat-pill" style="border-color:rgba(255,59,92,.3)">Pending SOS <strong style="color:var(--danger)">{{ stats.emergencies }}</strong></div>
+  </div>
+  <div class="adminbar-actions">
+    <button class="ab-btn add" onclick="openAddModal()">＋ Add Location</button>
+    <a href="/map/" style="text-decoration:none"><button class="ab-btn">👁 User View</button></a>
+    <a href="/logout/" style="text-decoration:none"><button class="ab-btn logout">⏻ Logout</button></a>
+  </div>
+</div>
+
+<div class="admin-layout">
+  <div style="position:relative;flex:1;display:flex;">
+    <div id="map" style="flex:1;"></div>
+    <div class="map-click-info" id="mapClickInfo">📌 Click on map to set coordinates for new location</div>
+  </div>
+
+  <div class="admin-panel">
+    <div class="panel-tabs">
+      <button class="ptab active" onclick="switchTab('locations')" id="tab-locations">📍 Locations</button>
+      <button class="ptab" onclick="switchTab('volunteers')" id="tab-volunteers">🤝 Volunteers</button>
+      <button class="ptab" onclick="switchTab('emergencies')" id="tab-emergencies">🆘 SOS</button>
+      <button class="ptab" onclick="switchTab('stats')" id="tab-stats">📊 Stats</button>
+    </div>
+
+    <!-- LOCATIONS -->
+    <div class="panel-body" id="pane-locations">
+      <div class="admin-search">
+        <input type="text" id="locSearch" placeholder="Search locations…" oninput="filterLocations()">
+        <select id="locCatFilter" onchange="filterLocations()">
+          <option value="">All</option>
+          <option value="food">Food</option>
+          <option value="shelter">Shelter</option>
+          <option value="water">Water</option>
+          <option value="medical">Medical</option>
+          <option value="clothing">Clothing</option>
+        </select>
+      </div>
+      <div id="locList"></div>
+    </div>
+
+    <!-- VOLUNTEERS -->
+    <div class="panel-body" id="pane-volunteers" style="display:none;">
+      <div class="vol-filter-row">
+        <select id="volSkillFilter">
+          <option value="">All Skills</option>
+          <option value="food_delivery">Food Delivery</option>
+          <option value="shelter_assistance">Shelter Assist</option>
+          <option value="medical_aid">Medical Aid</option>
+          <option value="counselling">Counselling</option>
+          <option value="transport">Transport</option>
+          <option value="clothing">Clothing</option>
+          <option value="general">General</option>
+        </select>
+        <select id="volCityFilter">
+          <option value="">All Cities</option>
+          <option>Delhi</option><option>Mumbai</option><option>Bengaluru</option>
+          <option>Chennai</option><option>Kolkata</option><option>Hyderabad</option>
+          <option>Pune</option><option>Ahmedabad</option>
+        </select>
+        <button class="vf-btn" onclick="loadVolunteers()">🔍</button>
+      </div>
+      <div id="volList"></div>
+    </div>
+
+    <!-- EMERGENCIES -->
+    <div class="panel-body" id="pane-emergencies" style="display:none;">
+      <div class="section-label">Recent SOS Requests</div>
+      <div id="emList">
+        {% for em in emergencies %}
+        <div class="em-card {% if em.urgency_score >= 8 %}critical{% elif em.urgency_score >= 5 %}high{% endif %}" id="em-{{ em.id }}">
+          <div class="em-header">
+            <span style="font-size:0.78rem;font-weight:600;">SOS #{{ em.id }}</span>
+            <span class="score-badge" style="background:{% if em.urgency_score >= 8 %}rgba(255,59,92,.15);color:#ff3b5c{% elif em.urgency_score >= 5 %}rgba(245,158,11,.15);color:#f59e0b{% else %}rgba(0,212,170,.15);color:#00d4aa{% endif %}">
+              {{ em.urgency_label }} · {{ em.urgency_score }}/10
+            </span>
+          </div>
+          <div class="em-msg">{{ em.message|truncatechars:120 }}</div>
+          {% if em.needs %}<div class="em-needs">🎯 Needs: {{ em.needs }}</div>{% endif %}
+          {% if em.contact %}<div class="em-meta" style="font-size:.76rem;color:var(--muted);">📞 {{ em.contact }}</div>{% endif %}
+          <div class="em-time">🕐 {{ em.created_at|date:"d M Y H:i" }}</div>
+          {% if not em.is_resolved %}
+          <button class="em-resolve" onclick="resolveEM({{ em.id }})">✅ Mark Resolved</button>
+          {% else %}
+          <div style="font-size:.76rem;color:var(--accent);margin-top:6px;">✅ Resolved</div>
+          {% endif %}
+        </div>
+        {% empty %}
+        <div class="empty-state"><div>✅</div>No emergencies logged yet</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="panel-body" id="pane-stats" style="display:none;">
+      <div class="section-label">Dashboard Overview</div>
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-box"><div class="num" id="s-total">–</div><div class="lbl">Total Locations</div></div>
+        <div class="stat-box"><div class="num" id="s-verified">–</div><div class="lbl">Verified</div></div>
+        <div class="stat-box"><div class="num" id="s-volunteers">–</div><div class="lbl">Volunteers</div></div>
+        <div class="stat-box"><div class="num" id="s-emergencies">–</div><div class="lbl">SOS Logged</div></div>
+      </div>
+      <div class="bar-chart" id="catChart">
+        <h4>📊 Locations by Category</h4>
+        <div id="catBars"></div>
+      </div>
+      <div class="bar-chart">
+        <h4>🏙 Top Cities</h4>
+        <div id="cityBars"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD / EDIT MODAL -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <h3 id="modalTitle">➕ Add New Location</h3>
+    <input type="hidden" id="editId">
+    <div class="form-row">
+      <div class="form-group">
+        <label>Name *</label>
+        <input type="text" id="fName" placeholder="Resource name">
+      </div>
+      <div class="form-group">
+        <label>Category *</label>
+        <select id="fCat">
+          <option value="food">🍱 Food</option>
+          <option value="shelter">🏠 Shelter</option>
+          <option value="water">💧 Water</option>
+          <option value="medical">🏥 Medical</option>
+          <option value="clothing">👕 Clothing</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Address *</label>
+      <input type="text" id="fAddr" placeholder="Full address">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>City *</label>
+        <select id="fCity">
+          <option>Delhi</option><option>Mumbai</option><option>Bengaluru</option>
+          <option>Chennai</option><option>Kolkata</option><option>Hyderabad</option>
+          <option>Pune</option><option>Ahmedabad</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Phone</label>
+        <input type="text" id="fPhone" placeholder="Phone number">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>📍 Location Coordinates *</label>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <button type="button" onclick="detectMyLocation()" style="flex:1;padding:10px;background:var(--accent);color:#000;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;font-size:0.85rem;">📡 Use My Location</button>
+        <button type="button" onclick="pickFromMap()" style="flex:1;padding:10px;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:8px;font-weight:600;cursor:pointer;font-family:inherit;font-size:0.85rem;">🗺 Click on Map</button>
+      </div>
+      <div id="coordDisplay" style="padding:10px 14px;background:var(--card);border:1px solid var(--border);border-radius:8px;font-size:0.82rem;color:var(--muted);text-align:center;">
+        No location selected — use a button above
+      </div>
+      <input type="hidden" id="fLat">
+      <input type="hidden" id="fLng">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Seats Available</label>
+        <input type="number" id="fSeats" placeholder="0" min="0">
+      </div>
+      <div class="form-group">
+        <label>Capacity</label>
+        <input type="number" id="fCap" placeholder="100" min="1">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Hours</label>
+      <input type="text" id="fHours" placeholder="e.g. 7AM–9PM or 24/7">
+    </div>
+    <div class="form-group">
+      <label>Description</label>
+      <textarea id="fDesc" placeholder="Brief description of the resource…"></textarea>
+    </div>
+    <div class="form-group">
+      <label>📸 Location Photo (optional)</label>
+      <div id="imagePreviewWrap" style="display:none;margin-bottom:8px;text-align:center;">
+        <img id="imagePreview" style="max-width:100%;max-height:160px;border-radius:8px;border:1px solid var(--border);" src="">
+        <button type="button" onclick="clearImage()" style="display:block;width:100%;margin-top:6px;padding:6px;background:transparent;border:1px solid var(--danger);border-radius:6px;color:var(--danger);cursor:pointer;font-family:inherit;font-size:0.78rem;">✕ Remove Photo</button>
+      </div>
+      <label for="fImage" style="display:flex;align-items:center;justify-content:center;gap:10px;padding:14px;background:var(--card);border:2px dashed var(--border);border-radius:8px;cursor:pointer;transition:all .2s;" id="imageDropZone">
+        <span style="font-size:1.5rem;">📷</span>
+        <span style="color:var(--muted);font-size:0.85rem;">Click to upload photo or drag & drop</span>
+      </label>
+      <input type="file" id="fImage" accept="image/*" style="display:none;" onchange="previewImage(this)">
+    </div>
+    <div class="form-group" style="display:flex;align-items:center;gap:10px;">
+      <input type="checkbox" id="fVerified" style="width:auto;accent-color:var(--accent);">
+      <label for="fVerified" style="margin:0;cursor:pointer;">✅ Mark as Verified</label>
+    </div>
+    <p style="font-size:0.75rem;color:var(--muted);margin-top:4px;">💡 Tip: Click <strong style="color:var(--accent)">Use My Location</strong> for instant GPS detection, or click on the map to pin manually.</p>
+    <div class="modal-btns">
+      <button class="modal-save" onclick="saveLocation()">💾 Save Location</button>
+      <button class="modal-cancel" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const ALL_LOCS = {{ locations|safe }};
+let addingMode = false;
+let tempMarker = null;
+
+// ─── MAP ──────────────────────────────────────────────────────────────────────
+const map = L.map('map').setView([20.5937,78.9629],5);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'&copy; CARTO',maxZoom:19}).addTo(map);
+
+const CAT_ICONS={food:'🍱',shelter:'🏠',water:'💧',medical:'🏥',clothing:'👕'};
+const CAT_COLORS={food:'#f59e0b',shelter:'#818cf8',water:'#22d3ee',medical:'#f87171',clothing:'#a78bfa'};
+
+function makeIcon(cat,verified){
+  return L.divIcon({
+    html:`<div style="background:${CAT_COLORS[cat]||'#00d4aa'};width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;border:2.5px solid ${verified?'#00d4aa':'#f59e0b'};box-shadow:0 3px 12px rgba(0,0,0,.5)">${CAT_ICONS[cat]||'📍'}</div>`,
+    className:'',iconSize:[34,34],iconAnchor:[17,17]
+  });
+}
+
+let markers={};
+function renderMarkers(locs){
+  Object.values(markers).forEach(m=>map.removeLayer(m));
+  markers={};
+  locs.forEach(loc=>{
+    const m=L.marker([loc.lat,loc.lng],{icon:makeIcon(loc.category,loc.is_verified)}).addTo(map);
+    m.bindPopup(`<div style="font-family:'Space Grotesk',sans-serif;min-width:200px">
+      <strong>${loc.name}</strong> ${loc.is_verified?'<span style="color:#00d4aa">✓</span>':'<span style="color:#f59e0b">⚠ Unverified</span>'}<br>
+      <span style="color:#6b7f96;font-size:.82rem">${loc.city} · ${loc.category}</span><br>
+      <span style="font-size:.8rem">${loc.address}</span><br>
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <button onclick="openEditModal(${loc.id})" style="flex:1;padding:6px;background:#141e2e;border:1px solid #1a2a3d;border-radius:6px;color:#e8f0fe;cursor:pointer;font-family:inherit;font-size:.78rem">✏️ Edit</button>
+        <button onclick="deleteLocation(${loc.id})" style="flex:1;padding:6px;background:rgba(255,59,92,.1);border:1px solid rgba(255,59,92,.3);border-radius:6px;color:#ff3b5c;cursor:pointer;font-family:inherit;font-size:.78rem">🗑 Delete</button>
+      </div>
+    </div>`);
+    markers[loc.id]=m;
+  });
+}
+
+// ─── LOCATION DETECTION ──────────────────────────────────────────────────────
+// ─── CITY MAP ────────────────────────────────────────────────────────────────
+const CITY_MAP = {
+  'bengaluru':'Bengaluru','bangalore':'Bengaluru','delhi':'Delhi','new delhi':'Delhi',
+  'mumbai':'Mumbai','bombay':'Mumbai','chennai':'Chennai','madras':'Chennai',
+  'kolkata':'Kolkata','calcutta':'Kolkata','hyderabad':'Hyderabad','pune':'Pune',
+  'ahmedabad':'Ahmedabad'
+};
+
+function matchCity(str) {
+  if (!str) return '';
+  const s = str.toLowerCase();
+  for (const [key, val] of Object.entries(CITY_MAP)) {
+    if (s.includes(key)) return val;
+  }
+  return str;
+}
+
+async function reverseGeocode(lat, lng) {
+  // Use OpenStreetMap Nominatim — free, no API key needed
+  const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1`;
+  const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+  const data = await res.json();
+  return data;
+}
+
+async function setCoords(lat, lng, source) {
+  document.getElementById('fLat').value = lat.toFixed(6);
+  document.getElementById('fLng').value = lng.toFixed(6);
+  document.getElementById('coordDisplay').innerHTML =
+    '<span style="color:#f59e0b;font-weight:700;">⏳ Fetching full address...</span>';
+  document.getElementById('coordDisplay').style.borderColor = '#f59e0b';
+  if(tempMarker) map.removeLayer(tempMarker);
+  tempMarker = L.circleMarker([lat,lng],{radius:12,fillColor:'#00d4aa',color:'#fff',weight:2,fillOpacity:0.9}).addTo(map);
+  map.setView([lat,lng], 16);
+
+  try {
+    const geo = await reverseGeocode(lat, lng);
+    const a = geo.address || {};
+
+    // Build full address string
+    const parts = [];
+    if (a.road || a.pedestrian || a.footway) parts.push(a.road || a.pedestrian || a.footway);
+    if (a.suburb || a.neighbourhood || a.quarter) parts.push(a.suburb || a.neighbourhood || a.quarter);
+    if (a.city_district || a.district) parts.push(a.city_district || a.district);
+    const city = a.city || a.town || a.village || a.county || '';
+    if (city) parts.push(city);
+    if (a.state) parts.push(a.state);
+    if (a.postcode) parts.push(a.postcode);
+    if (a.country) parts.push(a.country);
+
+    const fullAddress = parts.join(', ');
+    const detectedCity = matchCity(city || a.state || '');
+
+    // Auto-fill address field
+    if (fullAddress) {
+      document.getElementById('fAddr').value = fullAddress;
+    }
+
+    // Auto-fill city dropdown
+    if (detectedCity) {
+      const sel = document.getElementById('fCity');
+      for (let i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].value === detectedCity) {
+          sel.selectedIndex = i;
+          break;
+        }
+      }
+    }
+
+    document.getElementById('coordDisplay').innerHTML =
+      '<span style="color:#00d4aa;font-weight:700;">✅ ' + source + '</span><br>' +
+      '<span style="color:#e8f0fe;font-size:0.8rem;">' + (fullAddress || 'Address not found') + '</span><br>' +
+      '<span style="color:#7a8fa6;font-size:0.75rem;">Lat: ' + lat.toFixed(5) + ' · Lng: ' + lng.toFixed(5) + '</span>';
+    document.getElementById('coordDisplay').style.borderColor = '#00d4aa';
+
+  } catch(err) {
+    document.getElementById('coordDisplay').innerHTML =
+      '<span style="color:#00d4aa;font-weight:700;">✅ ' + source + '</span><br>' +
+      '<span style="color:#7a8fa6;font-size:0.75rem;">Lat: ' + lat.toFixed(5) + ' · Lng: ' + lng.toFixed(5) + ' (address lookup failed)</span>';
+    document.getElementById('coordDisplay').style.borderColor = '#00d4aa';
+  }
+}
+
+function detectMyLocation() {
+  const btn = event.target;
+  btn.textContent = '⏳ Detecting...';
+  btn.disabled = true;
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      async pos => {
+        await setCoords(pos.coords.latitude, pos.coords.longitude, 'GPS Location Detected');
+        showToast('📡 Location + full address auto-filled!');
+        btn.textContent = '📡 Use My Location';
+        btn.disabled = false;
+      },
+      err => {
+        fetch('https://ipapi.co/json/')
+          .then(r => r.json())
+          .then(async d => {
+            await setCoords(d.latitude, d.longitude, 'City Location (IP-based)');
+            showToast('📡 Location detected via IP');
+          })
+          .catch(() => showToast('⚠️ Could not detect location. Click on map instead.'));
+        btn.textContent = '📡 Use My Location';
+        btn.disabled = false;
+      },
+      { timeout: 8000, enableHighAccuracy: true }
+    );
+  } else {
+    showToast('⚠️ Geolocation not supported. Click on map instead.');
+    btn.textContent = '📡 Use My Location';
+    btn.disabled = false;
+  }
+}
+
+let mapPickMode = false;
+function pickFromMap() {
+  if (!document.getElementById('addModal').classList.contains('open')) return;
+  mapPickMode = true;
+  document.getElementById('coordDisplay').innerHTML = '<span style="color:#f59e0b;">🗺 Now click anywhere on the map to set location...</span>';
+  document.getElementById('coordDisplay').style.borderColor = '#f59e0b';
+  showToast('🗺 Click on the map to set coordinates');
+}
+
+// Map click to set coordinates
+map.on('click', async e=>{
+  if(!document.getElementById('addModal').classList.contains('open'))return;
+  await setCoords(e.latlng.lat, e.latlng.lng, 'Map Pin Location');
+  mapPickMode = false;
+  showToast('📌 Address auto-filled from map pin!');
+});
+
+renderMarkers(ALL_LOCS);
+
+// ─── LOCATION LIST ────────────────────────────────────────────────────────────
+let displayLocs=[...ALL_LOCS];
+function filterLocations(){
+  const q=document.getElementById('locSearch').value.toLowerCase();
+  const cat=document.getElementById('locCatFilter').value;
+  displayLocs=ALL_LOCS.filter(l=>{
+    const matchQ=!q||(l.name.toLowerCase().includes(q)||l.city.toLowerCase().includes(q)||l.address.toLowerCase().includes(q));
+    const matchC=!cat||l.category===cat;
+    return matchQ&&matchC;
+  });
+  renderLocList();
+  renderMarkers(displayLocs);
+}
+
+function renderLocList(){
+  const el=document.getElementById('locList');
+  if(!displayLocs.length){el.innerHTML='<div class="empty-state"><div>🔍</div>No locations found</div>';return;}
+  el.innerHTML=displayLocs.map(l=>`
+    <div class="loc-card" id="lc-${l.id}">
+      ${l.image ? `<img src="${l.image}" style="width:100%;height:100px;object-fit:cover;border-radius:8px;margin-bottom:8px;border:1px solid var(--border)">` : ''}
+      <div class="loc-card-header">
+        <div class="loc-name">${l.name}</div>
+        <span class="cat-badge cat-${l.category}">${l.category}</span>
+      </div>
+      <div class="loc-meta">
+        <span class="${l.is_verified?'verified-dot':'unverified-dot'}"></span>${l.is_verified?'Verified':'Unverified'} · ${l.city}<br>
+        ${l.address.substring(0,55)}${l.address.length>55?'…':''}<br>
+        🪑 ${l.seats_available}/${l.capacity} seats · ⏰ ${l.hours}
+      </div>
+      <div class="loc-actions">
+        <button class="la-btn" onclick="focusLocation(${l.id})">🗺 Map</button>
+        <button class="la-btn verify" onclick="verifyLocation(${l.id},${!l.is_verified})">${l.is_verified?'↩ Unverify':'✅ Verify'}</button>
+        <button class="la-btn" onclick="openEditModal(${l.id})">✏️ Edit</button>
+        <button class="la-btn del" onclick="deleteLocation(${l.id})">🗑</button>
+      </div>
+    </div>`).join('');
+}
+renderLocList();
+
+function focusLocation(id){
+  const loc=ALL_LOCS.find(l=>l.id===id);
+  if(!loc)return;
+  map.setView([loc.lat,loc.lng],15);
+  markers[id]?.openPopup();
+}
+
+// ─── VERIFY / DELETE ─────────────────────────────────────────────────────────
+function verifyLocation(id,isVerified){
+  fetch(`/api/location/${id}/update/`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({is_verified:isVerified})})
+    .then(r=>r.json()).then(()=>{
+      const loc=ALL_LOCS.find(l=>l.id===id);
+      if(loc)loc.is_verified=isVerified;
+      filterLocations();
+      showToast(isVerified?'✅ Location verified!':'↩ Verification removed');
+    });
+}
+
+function deleteLocation(id){
+  if(!confirm('Delete this location? This cannot be undone.'))return;
+  fetch(`/api/location/${id}/delete/`,{method:'POST',headers:{'Content-Type':'application/json'}})
+    .then(r=>r.json()).then(()=>{
+      const idx=ALL_LOCS.findIndex(l=>l.id===id);
+      if(idx>-1)ALL_LOCS.splice(idx,1);
+      filterLocations();
+      showToast('🗑 Location deleted');
+    });
+}
+
+// ─── ADD / EDIT MODAL ─────────────────────────────────────────────────────────
+function openAddModal(){
+  document.getElementById('modalTitle').textContent='➕ Add New Location';
+  document.getElementById('editId').value='';
+  ['fName','fAddr','fPhone','fHours','fDesc'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fSeats').value='0';
+  document.getElementById('fCap').value='100';
+  document.getElementById('fLat').value='';
+  document.getElementById('fLng').value='';
+  document.getElementById('coordDisplay').innerHTML='No location selected — use a button above';
+  document.getElementById('coordDisplay').style.borderColor='var(--border)';
+  clearImage();
+  document.getElementById('fVerified').checked=false;
+  document.getElementById('mapClickInfo').style.display='block';
+  document.getElementById('addModal').classList.add('open');
+}
+
+function openEditModal(id){
+  const loc=ALL_LOCS.find(l=>l.id===id);
+  if(!loc)return;
+  document.getElementById('modalTitle').textContent='✏️ Edit Location';
+  document.getElementById('editId').value=id;
+  document.getElementById('fName').value=loc.name;
+  document.getElementById('fAddr').value=loc.address;
+  document.getElementById('fCat').value=loc.category;
+  document.getElementById('fCity').value=loc.city;
+  document.getElementById('fPhone').value=loc.phone||'';
+  document.getElementById('fHours').value=loc.hours||'';
+  document.getElementById('fSeats').value=loc.seats_available||0;
+  document.getElementById('fCap').value=loc.capacity||100;
+  document.getElementById('fLat').value=loc.lat;
+  document.getElementById('fLng').value=loc.lng;
+  document.getElementById('coordDisplay').innerHTML='<span style="color:#00d4aa;font-weight:700;">✅ Existing coordinates</span><br><span style="color:#e8f0fe;">Lat: '+loc.lat+' &nbsp; Lng: '+loc.lng+'</span>';
+  document.getElementById('coordDisplay').style.borderColor='#00d4aa';
+  clearImage();
+  if(loc.image){
+    document.getElementById('imagePreview').src=loc.image;
+    document.getElementById('imagePreviewWrap').style.display='block';
+    document.getElementById('imageDropZone').style.display='none';
+  }
+  document.getElementById('fDesc').value=loc.description||'';
+  document.getElementById('fVerified').checked=loc.is_verified;
+  document.getElementById('addModal').classList.add('open');
+  map.setView([loc.lat,loc.lng],13);
+}
+
+function closeModal(){
+  document.getElementById('addModal').classList.remove('open');
+  document.getElementById('mapClickInfo').style.display='none';
+  if(tempMarker){map.removeLayer(tempMarker);tempMarker=null;}
+}
+
+function previewImage(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('imagePreview').src = e.target.result;
+    document.getElementById('imagePreviewWrap').style.display = 'block';
+    document.getElementById('imageDropZone').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearImage() {
+  document.getElementById('fImage').value = '';
+  document.getElementById('imagePreview').src = '';
+  document.getElementById('imagePreviewWrap').style.display = 'none';
+  document.getElementById('imageDropZone').style.display = 'flex';
+}
+
+function saveLocation(){
+  const editId = document.getElementById('editId').value;
+  const name = document.getElementById('fName').value;
+  const address = document.getElementById('fAddr').value;
+  const lat = document.getElementById('fLat').value;
+  const lng = document.getElementById('fLng').value;
+  if(!name||!address||!lat||!lng){showToast('⚠️ Fill all required fields');return;}
+
+  const fd = new FormData();
+  fd.append('name', name);
+  fd.append('category', document.getElementById('fCat').value);
+  fd.append('address', address);
+  fd.append('city', document.getElementById('fCity').value);
+  fd.append('phone', document.getElementById('fPhone').value);
+  fd.append('hours', document.getElementById('fHours').value||'24/7');
+  fd.append('lat', lat);
+  fd.append('lng', lng);
+  fd.append('seats_available', document.getElementById('fSeats').value||0);
+  fd.append('capacity', document.getElementById('fCap').value||100);
+  fd.append('description', document.getElementById('fDesc').value);
+  fd.append('is_verified', document.getElementById('fVerified').checked ? 'true' : 'false');
+
+  const imageFile = document.getElementById('fImage').files[0];
+  if (imageFile) fd.append('image', imageFile);
+
+  const url = editId ? `/api/location/${editId}/update/` : '/api/location/add/';
+  fetch(url, { method:'POST', body: fd })
+    .then(r=>r.json()).then(d=>{
+      const newData = {
+        name, category:document.getElementById('fCat').value,
+        address, city:document.getElementById('fCity').value,
+        phone:document.getElementById('fPhone').value,
+        hours:document.getElementById('fHours').value||'24/7',
+        lat:parseFloat(lat), lng:parseFloat(lng),
+        seats_available:parseInt(document.getElementById('fSeats').value||0),
+        capacity:parseInt(document.getElementById('fCap').value||100),
+        description:document.getElementById('fDesc').value,
+        is_verified:document.getElementById('fVerified').checked,
+        image: d.image || null
+      };
+      if(!editId){
+        ALL_LOCS.push({id:d.id, ...newData});
+      } else {
+        const loc=ALL_LOCS.find(l=>l.id===parseInt(editId));
+        if(loc) Object.assign(loc, newData);
+      }
+      filterLocations();
+      closeModal();
+      showToast(editId?'✅ Location updated!':'✅ Location added!');
+    }).catch(()=>showToast('⚠️ Save failed, try again'));
+}
+
+// ─── VOLUNTEERS ───────────────────────────────────────────────────────────────
+function loadVolunteers(){
+  const skill=document.getElementById('volSkillFilter').value;
+  const city=document.getElementById('volCityFilter').value;
+  fetch(`/api/volunteers/?skill=${skill}&city=${city}`)
+    .then(r=>r.json()).then(d=>{
+      const el=document.getElementById('volList');
+      if(!d.volunteers.length){el.innerHTML='<div class="empty-state"><div>🤝</div>No volunteers found</div>';return;}
+      el.innerHTML=d.volunteers.map(v=>`
+        <div class="vol-card">
+          <div class="vol-name">${v.name}</div>
+          <span class="skill-tag">${v.skill}</span>
+          <div class="vol-meta">
+            📍 ${v.city} · 📞 ${v.phone}<br>
+            📅 Available: ${v.available_days}
+          </div>
+        </div>`).join('');
+    });
+}
+
+// ─── EMERGENCIES ─────────────────────────────────────────────────────────────
+function resolveEM(id){
+  fetch(`/api/location/${id}/update/`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({is_resolved:true})})
+    .catch(()=>{});
+  const card=document.getElementById('em-'+id);
+  if(card){
+    const btn=card.querySelector('.em-resolve');
+    if(btn)btn.outerHTML='<div style="font-size:.76rem;color:var(--accent);margin-top:6px;">✅ Resolved</div>';
+    card.style.borderColor='var(--border)';
+    card.style.background='';
+  }
+  showToast('✅ Emergency marked resolved');
+}
+
+// ─── STATS ────────────────────────────────────────────────────────────────────
+function loadStats(){
+  fetch('/api/stats/').then(r=>r.json()).then(d=>{
+    document.getElementById('s-total').textContent=d.total_locations;
+    document.getElementById('s-verified').textContent=d.verified;
+    document.getElementById('s-volunteers').textContent=d.volunteers;
+    document.getElementById('s-emergencies').textContent=d.emergencies;
+    const cats=d.by_category;
+    const max=Math.max(...Object.values(cats))||1;
+    const colors={food:'#f59e0b',shelter:'#818cf8',water:'#22d3ee',medical:'#f87171',clothing:'#a78bfa'};
+    document.getElementById('catBars').innerHTML=Object.entries(cats).map(([cat,count])=>`
+      <div class="bar-row">
+        <span class="bar-label">${cat}</span>
+        <div class="bar-bg"><div class="bar-fill" style="width:${(count/max*100)}%;background:${colors[cat]||'#00d4aa'}"></div></div>
+        <span class="bar-val">${count}</span>
+      </div>`).join('');
+    // city breakdown
+    const cityCount={};
+    ALL_LOCS.forEach(l=>cityCount[l.city]=(cityCount[l.city]||0)+1);
+    const cityMax=Math.max(...Object.values(cityCount))||1;
+    document.getElementById('cityBars').innerHTML=Object.entries(cityCount).sort((a,b)=>b[1]-a[1]).map(([city,count])=>`
+      <div class="bar-row">
+        <span class="bar-label">${city}</span>
+        <div class="bar-bg"><div class="bar-fill" style="width:${(count/cityMax*100)}%;background:#00d4aa"></div></div>
+        <span class="bar-val">${count}</span>
+      </div>`).join('');
+  });
+}
+
+// ─── TABS ─────────────────────────────────────────────────────────────────────
+function switchTab(tab){
+  ['locations','volunteers','emergencies','stats'].forEach(t=>{
+    document.getElementById('pane-'+t).style.display=t===tab?'block':'none';
+    document.getElementById('tab-'+t).classList.toggle('active',t===tab);
+  });
+  if(tab==='volunteers')loadVolunteers();
+  if(tab==='stats')loadStats();
+}
+
+// ─── TOAST ────────────────────────────────────────────────────────────────────
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+document.getElementById('addModal').addEventListener('click',e=>{if(e.target===document.getElementById('addModal'))closeModal();});
+</script>
+</body>
+</html>
