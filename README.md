@@ -4,7 +4,7 @@ A full-stack Django web application connecting homeless individuals to food, she
 
 **Merged Version - Production Ready with Development Features**
 
----
+
 
 ## 🚀 Quick Start
 
@@ -18,7 +18,7 @@ bash setup.sh
 
 Then open: **http://127.0.0.1:8000/**
 
----
+
 
 ## 📋 Manual Setup
 
@@ -30,7 +30,7 @@ python manage.py seed_data          # loads 30 locations + 7 volunteers + admin 
 python manage.py runserver
 ```
 
----
+
 
 ## 🔗 Pages
 
@@ -44,7 +44,7 @@ python manage.py runserver
 
 **Admin credentials:** `admin` / `admin123`
 
----
+
 
 ## ✨ Features
 
@@ -68,7 +68,7 @@ python manage.py runserver
 - 🆘 **SOS Dashboard** — review emergency requests, mark resolved
 - 📊 **Live Stats** — category breakdown, city breakdown bar charts
 
----
+
 
 ## 🗃 Database
 
@@ -79,7 +79,7 @@ python manage.py runserver
 
 **Categories:** Food · Shelter · Water · Medical · Clothing
 
----
+
 
 ## 🧠 AI Features
 
@@ -88,7 +88,7 @@ python manage.py runserver
 - **SurvivalBot** — Claude API chatbot (requires API key in browser)
 - **SMS Parser** — 93%+ accuracy on CATEGORY CITY commands
 
----
+
 
 ## 📡 API Endpoints
 
@@ -117,11 +117,11 @@ python manage.py runserver
 - **AI:** Claude API (Anthropic) for chatbot
 - **Frontend:** Vanilla JS, Space Grotesk font, no build step needed
 
----
+
 
 ## 📁 Project Structure
 
-```
+
 survivalmap/
 ├── manage.py
 ├── setup.sh
@@ -142,4 +142,4 @@ survivalmap/
         ├── user_map.html      # Public user interface
         ├── admin_map.html     # Admin dashboard
         └── login.html         # Admin login
-```
+
