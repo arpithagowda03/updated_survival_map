@@ -6,7 +6,7 @@ A full-stack Django web application connecting homeless individuals to food, she
 
 
 
-## 🚀 Quick Start
+ 🚀 Quick Start
 
 ```bash
 # 1. Extract the zip and enter the folder
