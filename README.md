@@ -2,7 +2,7 @@
 
 A full-stack Django web application connecting homeless individuals to food, shelter, water, and medical resources across 8 Indian cities.
 
-**Master Branch - Production Ready Version**
+**Merged Version - Production Ready with Development Features**
 
 ---
 
