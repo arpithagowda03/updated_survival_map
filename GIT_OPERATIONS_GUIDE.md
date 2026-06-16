@@ -27,7 +27,7 @@ git config user.email "arpithahm34@gmail.com"
 
 ### 3. Remote Repository Setup
 
-```bash
+bash
 git remote add origin https://github.com/arpithagowda03/updated_survival_map.git
 git remote -v
 ```
