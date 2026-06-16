@@ -2,6 +2,8 @@
 
 A full-stack Django web application connecting homeless individuals to food, shelter, water, and medical resources across 8 Indian cities.
 
+**Master Branch - Production Ready Version**
+
 ---
 
 ## 🚀 Quick Start
@@ -32,13 +34,13 @@ python manage.py runserver
 
 ## 🔗 Pages
 
-| URL | Description |
-|-----|-------------|
-| `/` | Home page with stats & features |
-| `/map/` | **User Map** — find resources, directions, SOS, chatbot |
-| `/login/` | Admin login |
-| `/admin-map/` | **Admin Dashboard** — manage locations, volunteers, SOS |
-| `/django-admin/` | Django admin panel |
+| URL              | Description                                             |
+| ---------------- | ------------------------------------------------------- |
+| `/`              | Home page with stats & features                         |
+| `/map/`          | **User Map** — find resources, directions, SOS, chatbot |
+| `/login/`        | Admin login                                             |
+| `/admin-map/`    | **Admin Dashboard** — manage locations, volunteers, SOS |
+| `/django-admin/` | Django admin panel                                      |
 
 **Admin credentials:** `admin` / `admin123`
 
@@ -47,6 +49,7 @@ python manage.py runserver
 ## ✨ Features
 
 ### User Interface (`/map/`)
+
 - 🗺 **Interactive Map** — Leaflet.js dark map with color-coded markers
 - 📍 **Auto Geolocation** — GPS first, IP fallback, no manual input needed
 - 🔍 **Search & Filter** — by category (food/shelter/water/medical/clothing) and free text
@@ -58,6 +61,7 @@ python manage.py runserver
 - 📊 **Crowd Prediction** — best visit times per shelter
 
 ### Admin Interface (`/admin-map/`)
+
 - 📍 **Full CRUD** — add/edit/delete locations with map-click coordinate picker
 - ✅ **Verify/Unverify** — control what users see
 - 🤝 **Volunteer Browser** — filter by skill and city
@@ -69,6 +73,7 @@ python manage.py runserver
 ## 🗃 Database
 
 **30 verified locations** across:
+
 - 🏙 Delhi (7) · Mumbai (5) · Bengaluru (5) · Chennai (3)
 - Kolkata (3) · Hyderabad (3) · Pune (3) · + Medical (2)
 
@@ -87,20 +92,20 @@ python manage.py runserver
 
 ## 📡 API Endpoints
 
-| Method | URL | Description |
-|--------|-----|-------------|
-| GET | `/api/locations/` | All verified locations (filter: category, city, q) |
-| GET | `/api/nearby/?lat=&lng=` | Sorted by distance |
-| GET | `/api/directions/` | OSRM route data |
-| POST | `/api/urgency/` | AI urgency scoring |
-| POST | `/api/volunteer/register/` | Register volunteer |
-| GET | `/api/volunteers/` | List volunteers (filter: skill, city) |
-| GET | `/api/crowd/<id>/` | Occupancy prediction |
-| POST | `/api/sms/` | SMS command parser |
-| POST | `/api/location/add/` | Add location |
-| POST | `/api/location/<id>/update/` | Update location |
-| POST | `/api/location/<id>/delete/` | Delete location |
-| GET | `/api/stats/` | Dashboard statistics |
+| Method | URL                          | Description                                        |
+| ------ | ---------------------------- | -------------------------------------------------- |
+| GET    | `/api/locations/`            | All verified locations (filter: category, city, q) |
+| GET    | `/api/nearby/?lat=&lng=`     | Sorted by distance                                 |
+| GET    | `/api/directions/`           | OSRM route data                                    |
+| POST   | `/api/urgency/`              | AI urgency scoring                                 |
+| POST   | `/api/volunteer/register/`   | Register volunteer                                 |
+| GET    | `/api/volunteers/`           | List volunteers (filter: skill, city)              |
+| GET    | `/api/crowd/<id>/`           | Occupancy prediction                               |
+| POST   | `/api/sms/`                  | SMS command parser                                 |
+| POST   | `/api/location/add/`         | Add location                                       |
+| POST   | `/api/location/<id>/update/` | Update location                                    |
+| POST   | `/api/location/<id>/delete/` | Delete location                                    |
+| GET    | `/api/stats/`                | Dashboard statistics                               |
 
 ---
 
