@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SurvivalMap — Find Help Now</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080c14; --surface: #0f1825; --card: #141e2e; --border: #1e2d45;
+    --accent: #00d4aa; --accent2: #ff6b35; --danger: #ff3b5c;
+    --text: #e8f0fe; --muted: #7a8fa6; --glow: rgba(0,212,170,0.15);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', sans-serif; overflow-x: hidden; }
+
+  nav { position: fixed; top: 0; width: 100%; z-index: 100; padding: 18px 40px; display: flex; justify-content: space-between; align-items: center; background: rgba(8,12,20,0.9); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
+  .logo { font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 800; color: var(--accent); }
+  .logo span { color: var(--accent2); }
+  .nav-links { display: flex; gap: 12px; }
+  .nav-links a { padding: 9px 20px; border-radius: 8px; text-decoration: none; font-size: 0.9rem; font-weight: 500; transition: all 0.2s; }
+  .btn-ghost { color: var(--muted); border: 1px solid var(--border); }
+  .btn-ghost:hover { color: var(--text); border-color: var(--accent); }
+  .btn-primary { background: var(--accent); color: #000; font-weight: 700; }
+  .btn-primary:hover { background: #00f5c4; }
+  .btn-admin { background: transparent; color: var(--accent2); border: 1px solid var(--accent2); }
+  .btn-admin:hover { background: var(--accent2); color: #fff; }
+
+  .hero { min-height: 100vh; display: flex; align-items: center; padding: 0 40px; position: relative; overflow: hidden; }
+  .hero-bg { position: absolute; inset: 0; background: radial-gradient(ellipse 80% 60% at 60% 50%, rgba(0,212,170,0.06) 0%, transparent 70%); }
+  .grid-lines { position: absolute; inset: 0; background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px); background-size: 60px 60px; opacity: 0.3; }
+  .hero-content { position: relative; z-index: 2; max-width: 680px; }
+  .crisis-badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; background: rgba(255,59,92,0.12); border: 1px solid rgba(255,59,92,0.3); border-radius: 100px; font-size: 0.78rem; color: var(--danger); font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 28px; }
+  .pulse-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--danger); animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(1.4)} }
+  h1 { font-family: 'Syne', sans-serif; font-size: clamp(2.8rem, 6vw, 4.5rem); font-weight: 800; line-height: 1.05; letter-spacing: -2px; margin-bottom: 24px; }
+  h1 em { font-style: normal; color: var(--accent); }
+  .hero-sub { font-size: 1.15rem; color: var(--muted); line-height: 1.7; max-width: 520px; margin-bottom: 40px; }
+  .hero-sub strong { color: var(--text); }
+  .cta-group { display: flex; gap: 14px; flex-wrap: wrap; }
+  .cta-main { display: inline-flex; align-items: center; gap: 10px; padding: 15px 32px; background: var(--accent); color: #000; font-weight: 700; font-size: 1rem; border-radius: 10px; text-decoration: none; transition: all 0.25s; }
+  .cta-main:hover { background: #00f5c4; transform: translateY(-2px); }
+  .cta-secondary { display: inline-flex; align-items: center; gap: 10px; padding: 15px 32px; background: transparent; color: var(--text); font-weight: 600; font-size: 1rem; border-radius: 10px; text-decoration: none; border: 1px solid var(--border); transition: all 0.25s; }
+  .cta-secondary:hover { border-color: var(--accent2); color: var(--accent2); }
+
+  .hero-stats { position: absolute; right: 60px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 16px; z-index: 2; }
+  .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px 24px; min-width: 160px; text-align: center; transition: all 0.3s; }
+  .stat-card:hover { border-color: var(--accent); transform: translateX(-4px); }
+  .stat-num { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; color: var(--accent); }
+  .stat-label { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+  .features { padding: 100px 40px; }
+  .section-tag { font-size: 0.75rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 16px; }
+  .section-title { font-family: 'Syne', sans-serif; font-size: clamp(1.8rem, 3.5vw, 2.8rem); font-weight: 800; letter-spacing: -1px; margin-bottom: 60px; }
+  .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+  .feature-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 32px; transition: all 0.3s; position: relative; overflow: hidden; }
+  .feature-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background: var(--accent); transform: scaleX(0); transform-origin: left; transition: transform 0.3s; }
+  .feature-card:hover { border-color: var(--accent); transform: translateY(-4px); }
+  .feature-card:hover::before { transform: scaleX(1); }
+  .feature-icon { width: 52px; height: 52px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 20px; background: rgba(0,212,170,0.1); }
+  .feature-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 10px; }
+  .feature-card p { font-size: 0.9rem; color: var(--muted); line-height: 1.6; }
+
+  .cities-section { padding: 80px 40px; background: var(--surface); }
+  .city-tags { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
+  .city-tag { padding: 10px 22px; background: var(--card); border: 1px solid var(--border); border-radius: 100px; font-size: 0.9rem; font-weight: 500; transition: all 0.2s; }
+  .city-tag:hover { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 700; }
+
+  .emergency-section { padding: 80px 40px; }
+  .emergency-box { background: linear-gradient(135deg, rgba(255,59,92,0.08), rgba(255,107,53,0.05)); border: 1px solid rgba(255,59,92,0.25); border-radius: 20px; padding: 50px; text-align: center; }
+  .emergency-box h2 { font-family:'Syne',sans-serif; font-size: 2rem; font-weight: 800; margin-bottom: 16px; }
+  .emergency-box p { color: var(--muted); max-width: 560px; margin: 0 auto 32px; line-height: 1.7; }
+  .helplines { display: flex; justify-content: center; flex-wrap: wrap; gap: 16px; }
+  .helpline { padding: 12px 24px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; font-weight: 600; }
+  .helpline span { color: var(--accent); }
+
+  footer { padding: 40px; border-top: 1px solid var(--border); text-align: center; color: var(--muted); font-size: 0.85rem; }
+  footer a { color: var(--accent); text-decoration: none; }
+
+  @media(max-width:900px) {
+    .hero-stats { display:none; }
+    nav { padding: 16px 20px; }
+    .hero { padding: 100px 20px 60px; }
+    .features, .cities-section, .emergency-section { padding: 60px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Survival<span>Map</span></div>
+  <div class="nav-links">
+    <a href="/map/" class="btn-ghost">User Map</a>
+    <a href="/login/" class="btn-admin">Admin Login</a>
+    <a href="/map/" class="btn-primary">Find Help Now</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="grid-lines"></div>
+  <div class="hero-content">
+    <div class="crisis-badge"><span class="pulse-dot"></span> 78 Million Homeless in India</div>
+    <h1>Find <em>Food, Shelter</em><br>and Water Near You</h1>
+    <p class="hero-sub">SurvivalMap connects homeless individuals to <strong>verified resources</strong> across 8 Indian cities with real-time mapping, AI emergency triage, and SMS access.</p>
+    <div class="cta-group">
+      <a href="/map/" class="cta-main">Open Live Map</a>
+      <a href="/login/" class="cta-secondary">Admin Dashboard</a>
+    </div>
+  </div>
+  <div class="hero-stats">
+    <div class="stat-card">
+      <div class="stat-num">{{ stats.locations }}</div>
+      <div class="stat-label">Verified Resources</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">{{ stats.volunteers }}</div>
+      <div class="stat-label">Volunteers</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">{{ stats.cities }}</div>
+      <div class="stat-label">Cities Covered</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">{{ stats.emergencies }}</div>
+      <div class="stat-label">SOS Handled</div>
+    </div>
+  </div>
+</section>
+
+<section class="features" id="features">
+  <p class="section-tag">Platform Features</p>
+  <h2 class="section-title">Everything you need to survive tonight</h2>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">🗺️</div>
+      <h3>Real-Time Interactive Map</h3>
+      <p>Auto-detects your location via GPS or IP fallback. Shows food, shelter, water, and medical resources sorted by distance.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🧠</div>
+      <h3>AI Urgency Classification</h3>
+      <p>Describe your situation. Our AI scores severity 1–10, identifies your needs, and displays emergency helplines for critical cases.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📱</div>
+      <h3>SMS Access — No Internet Needed</h3>
+      <p>Text FOOD DELHI or SHELTER MUMBAI to get resource locations in plain text. For the 35% without data connectivity.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🤝</div>
+      <h3>Volunteer Network</h3>
+      <p>Register your skills — food delivery, medical aid, transport, counselling. Admins can find volunteers by city and skill.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📊</div>
+      <h3>Crowd Prediction</h3>
+      <p>See predicted shelter occupancy by hour before visiting. Know the best time to arrive. Powered by historical patterns.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🤖</div>
+      <h3>SurvivalBot AI Assistant</h3>
+      <p>Chat with our AI assistant about resources, safety, and emergency support. Context-aware helpline surfacing for urgent cases.</p>
+    </div>
+  </div>
+</section>
+
+<section class="cities-section">
+  <p class="section-tag">Coverage</p>
+  <h2 class="section-title">Verified resources across India</h2>
+  <div class="city-tags">
+    <div class="city-tag">Delhi</div>
+    <div class="city-tag">Mumbai</div>
+    <div class="city-tag">Bengaluru</div>
+    <div class="city-tag">Chennai</div>
+    <div class="city-tag">Kolkata</div>
+    <div class="city-tag">Hyderabad</div>
+    <div class="city-tag">Pune</div>
+    <div class="city-tag">Ahmedabad</div>
+  </div>
+</section>
+
+<section class="emergency-section">
+  <div class="emergency-box">
+    <h2>In an Emergency Right Now?</h2>
+    <p>If you or someone is in immediate danger, call these numbers immediately. SurvivalMap's AI can also assess your situation and connect you to the nearest help.</p>
+    <div class="helplines">
+      <div class="helpline">National Emergency <span>112</span></div>
+      <div class="helpline">Police <span>100</span></div>
+      <div class="helpline">Ambulance <span>108</span></div>
+      <div class="helpline">iCall <span>9152987821</span></div>
+      <div class="helpline">Vandrevala Foundation <span>1860-2662-345</span></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>SurvivalMap &mdash; Built to save lives &mdash; <a href="/map/">Open Map</a> &middot; <a href="/login/">Admin</a></p>
+  <p style="margin-top:8px">A Django + AI powered platform for homeless support across India</p>
+</footer>
+
+</body>
+</html>
